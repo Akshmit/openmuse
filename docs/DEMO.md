@@ -2,49 +2,69 @@
 
 [Watch the 38-second MP4](../assets/openmuse-mobile-demo.mp4) · [Animated hero](../assets/openmuse-demo.gif) · [Cover image](../assets/openmuse-preview.png).
 
-Recorded from the working OpenMuse development build on an iPhone 17 simulator. The video is **1920 × 1080 (16:9), 30 fps, and 38 seconds**, with a cream, blue, and lilac background and captions designed for sound-off viewing. The opening hook is “Your agent has a computer.” Actual app captures are cut and accelerated up to 2×; no provider connections or execution results are simulated in the edit.
+**OpenMuse 🪁 — ask it to browse, follow along in chat, and take control when you need to.** The native iPhone recording is framed in a 1920 × 1080 (16:9) canvas, with a cream, blue, and lilac background and captions for sound-off viewing.
+
+The model responses use [CopilotKit AI Mock](https://github.com/CopilotKit/aimock). The app runs its actual CopilotKit agent and `browse_web` tool against a real Chromium worker. The script requests a page, waits for the real tool result, and extracts headlines or overview text from that result. It does not supply browser results or invent page content. The video also labels the model as AI Mock.
 
 ## What the recording shows
 
 | Time | Scene |
 | --- | --- |
-| 0:00–0:03 | The agent computer and its saved browser session |
-| 0:03–0:10 | Opening the real CopilotKit website and Hacker News in persistent Chromium |
-| 0:10–0:15 | A Linux command receipt with successful output and a saved `today.md` file |
-| 0:15–0:21 | Opening and saving that same file in the workspace editor |
-| 0:21–0:27 | A PDF exported from the computer into the native reader, including paging |
-| 0:27–0:32 | A saved document result and action update in the CopilotKit conversation |
-| 0:32–0:38 | Goals and the open-source repository link |
+| 0:00–0:04 | Ask OpenMuse to explore Hacker News |
+| 0:04–0:09 | Read highlights from the live page |
+| 0:09–0:15 | Ask it to summarize CopilotKit |
+| 0:15–0:21 | Follow the inline browser and result |
+| 0:21–0:31 | Take control of the same live browser |
+| 0:31–0:38 | Return to chat and the OpenMuse repository |
 
-The walkthrough shows manual browser/computer interaction and previously saved task results. It does not present these edits as an uninterrupted autonomous agent run. Personal mail, goals, and form details are fictional. CopilotKit and Hacker News are real public pages. The Linux workspace runs in the project's isolated Docker container, using a dedicated Colima VM on the recording machine; it is not Meta Secure VM or a graphical desktop.
+- A chat request to find interesting stories on Hacker News.
+- A server tool call that opens and reads the page, with a browser card inline in the conversation.
+- Highlights extracted from the page the browser just read.
+- A second request to summarize CopilotKit, using the same persistent browser session.
+- **Take control**, which opens that session's live browser console.
+- The open-source repository at [CopilotKit/OpenMuse](https://github.com/CopilotKit/OpenMuse).
 
-Live Google, model-provider quality, CopilotKit Intelligence persistence/replay, and OpenBot still require separately configured acceptance runs. See [verification](VERIFICATION.md).
+Captures are trimmed and paced for readability, including brief slowdowns of the browser card and faster transitions into takeover. This is a reproducible demonstration of the app and tool flow; it is not an evaluation of a live model's reasoning. Site content changes, so your highlights can differ. Personal workspace information is fictional. Live Google, provider quality, Intelligence persistence/replay, and OpenBot require separately configured acceptance runs; see [verification](VERIFICATION.md).
 
-## Reproduce the workspace
+## Run the agent browser demo
 
-1. Follow the [quick start](../README.md#quick-start). Keep the default local-data mode for fictional personal information.
-2. In Chat, ask **“Complete the permission slip”**. Open the task, enter fictional form values, inspect the PDF, and review the local reply. Its saved tool result remains in the conversation.
-3. Start the [browser worker](../apps/worker/README.md#local-development), open Computer, and navigate to `copilotkit.ai` or `news.ycombinator.com`. Bare domains become HTTPS addresses.
-4. Enable the [Linux computer](COMPUTER.md) and open **Computer → Terminal → Start computer**. Run:
+From the repository root:
 
-   ```sh
-   printf '# Today\n\n- Read Hacker News\n- Review my calendar\n- Plan the week\n' > today.md
-   cat today.md
-   ```
+```sh
+pnpm install --frozen-lockfile
+pnpm --dir apps/worker exec playwright install chromium
+pnpm dev:demo
+```
 
-5. Open **Files → today.md** and save it. The file is in the same persistent `/workspace` volume used by the terminal.
-6. Choose **Copy a document here** to import an app PDF. Open the copied file from the workspace list to export it into Documents and display it in the native reader. Use **Next** to inspect the second page.
-7. In **Menu → Delegate task → Finance**, use **Try example transactions**. Open the saved artifact to create a savings goal and visit Goals.
+This starts AI Mock, the normal OpenMuse API on port **8788**, and a separate real browser worker on **8791**. Demo files and profiles stay in ignored `artifacts/demo/`. The runner supplies an explicit local environment and does not load the project's private `.env` or provider credentials. The Linux computer is disabled for this focused browser recording.
+
+Start the app in another terminal:
+
+```sh
+EXPO_PUBLIC_API_URL=http://127.0.0.1:8788 pnpm dev:web
+```
+
+For the iPhone development build:
+
+```sh
+EXPO_PUBLIC_API_URL=http://127.0.0.1:8788 pnpm --dir apps/mobile exec expo start --dev-client --port 8081
+```
+
+Use the [native setup](../apps/mobile/README.md) if the development build is not installed. Fully reload the app after changing its API URL. Android emulators use `http://10.0.2.2:8788` for the host API.
+
+Send **“Check out Hacker News for cool stuff”**, then **“Summarize copilotkit.ai”**. Wait for each reply and choose **Take control** to inspect the browser. The recording script supports those two prompts; use [a configured model](../README.md#configure-the-agent-and-google) for open-ended requests. `browse_web` is the same server tool in both modes.
+
+`DEMO_MODEL_FIRST_BYTE_DELAY_MS` and `DEMO_MODEL_CHUNK_DELAY_MS` tune model pacing (defaults 1500 and 80 ms). `DEMO_API_PORT` changes the API port. Set `DEMO_WORKER_URL` and `DEMO_WORKER_TOKEN` to use an existing local worker instead of starting one. The built-in demo token is public and scoped to this local demo; it is not a deployment credential. Press Control-C to stop the demo processes. Restart your normal app command without the demo API override to return to your usual workspace.
 
 ## Record your own demo
 
-Use a simulator containing fictional personal data. With the native app open:
+With the app open on a simulator containing fictional personal information:
 
 ```sh
 xcrun simctl io booted recordVideo --codec=h264 openmuse-recording.mp4
 # Interact with the app. Press Control-C to finish the video.
 ```
 
-Capture at native resolution, trim idle time, and place the portrait capture inside a 16:9 canvas. Keep captions short and show the first working screen immediately. Check the final video for development reload banners, credentials, and accidental private content before publishing.
+Capture at native resolution, trim idle time, and frame the portrait capture inside a 16:9 canvas. Show the chat request and its real tool result. Keep the model's mocked status visible if you use this runner. Check the final video for development reload banners and private content before publishing.
 
-The original [75-second alpha walkthrough](https://github.com/jerelvelarde/openmuse/releases/download/v0.1.0-alpha/openmuse-demo.mp4) remains available as a release archive. The README hero uses the newer 38-second cut. OpenMuse's own artwork is included; Meta reference screenshots and mascot are not redistributed.
+The original [75-second alpha walkthrough](https://github.com/jerelvelarde/openmuse/releases/download/v0.1.0-alpha/openmuse-demo.mp4) remains available as a historical release archive. OpenMuse's own artwork is included; Meta reference screenshots and mascot are not redistributed.
