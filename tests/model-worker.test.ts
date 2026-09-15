@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
-import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -8,13 +7,11 @@ import { createApp } from "../apps/server/src/app.ts";
 import { createStore } from "../apps/server/src/db.ts";
 import type { ActionProposal } from "../packages/domain/src/index.ts";
 import { fixture as computerFixture } from "./helpers/computer.ts";
+import { modelFixture } from "./helpers/model.ts";
 
-test("CopilotKit model worker executes server tools and persists the confirmed outcome", async () => {
+test("CopilotKit model worker executes server tools and persists the confirmed outcome", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "openmuse-model-"));
   const db = await createStore();
-  const previousBase = process.env.OPENAI_BASE_URL,
-    previousKey = process.env.OPENAI_API_KEY;
-  const requests: { path: string; body: string }[] = [];
   const calls: { name: string; arguments: object }[] = [
     {
       name: "set_plan",
@@ -36,55 +33,7 @@ test("CopilotKit model worker executes server tools and persists the confirmed o
     },
     { name: "finish_task", arguments: { summary: "Saved your weekend plan with two steps." } },
   ];
-  const fixture = createServer(async (request, response) => {
-    let body = "";
-    for await (const chunk of request) body += chunk;
-    const index = requests.length;
-    requests.push({ path: request.url ?? "", body });
-    response.writeHead(200, { "Content-Type": "text/event-stream" });
-    const emit = (type: string, value: object) =>
-      response.write(`data: ${JSON.stringify({ type, ...value })}\n\n`);
-    const base = { id: `response-${index}`, created_at: 1000, model: "fixture" };
-    emit("response.created", { response: { ...base, status: "in_progress" } });
-    const call = calls[index];
-    if (call) {
-      const item = {
-        id: `item-${index}`,
-        type: "function_call",
-        call_id: `call-${index}`,
-        name: call.name,
-        arguments: JSON.stringify(call.arguments),
-      };
-      emit("response.output_item.added", { output_index: 0, item: { ...item, arguments: "" } });
-      emit("response.function_call_arguments.delta", {
-        item_id: item.id,
-        output_index: 0,
-        delta: item.arguments,
-      });
-      emit("response.output_item.done", {
-        output_index: 0,
-        item: { ...item, status: "completed" },
-      });
-    }
-    emit("response.completed", {
-      response: {
-        ...base,
-        status: "completed",
-        usage: {
-          input_tokens: 10,
-          output_tokens: 5,
-          input_tokens_details: { cached_tokens: 0 },
-          output_tokens_details: { reasoning_tokens: 0 },
-        },
-      },
-    });
-    response.end("data: [DONE]\n\n");
-  });
-  await new Promise<void>((resolve) => fixture.listen(0, "127.0.0.1", resolve));
-  const address = fixture.address();
-  assert.ok(address && typeof address !== "string");
-  process.env.OPENAI_BASE_URL = `http://127.0.0.1:${address.port}/v1`;
-  process.env.OPENAI_API_KEY = "local-test-fixture";
+  const { requests } = await modelFixture(t, (index) => calls[index]);
   const server = await createApp(
     db,
     {
@@ -162,11 +111,6 @@ test("CopilotKit model worker executes server tools and persists the confirmed o
   } finally {
     await server.agent.stop();
     await db.close();
-    await new Promise<void>((resolve) => fixture.close(() => resolve()));
-    if (previousBase === undefined) delete process.env.OPENAI_BASE_URL;
-    else process.env.OPENAI_BASE_URL = previousBase;
-    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
-    else process.env.OPENAI_API_KEY = previousKey;
     await rm(directory, { recursive: true, force: true });
   }
 });

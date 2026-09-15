@@ -9,20 +9,22 @@ Built with CopilotKit React Native for iOS, Android, and web.
 
 [Quick start](#quick-start) · [Demo](#demo) · [Features](#features) · [Architecture](#architecture) · [Docs](docs/README.md) · [Contributing](CONTRIBUTING.md)
 
-[![CI](https://github.com/jerelvelarde/openmuse/actions/workflows/ci.yml/badge.svg)](https://github.com/jerelvelarde/openmuse/actions/workflows/ci.yml)
+[![CI](https://github.com/CopilotKit/OpenMuse/actions/workflows/ci.yml/badge.svg)](https://github.com/CopilotKit/OpenMuse/actions/workflows/ci.yml)
 [![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[![Your agent has a computer. Watch the 38-second OpenMuse mobile demo.](assets/openmuse-demo.gif)](assets/openmuse-mobile-demo.mp4)
+[![OpenMuse 🪁 — Ask it to browse. Watch the 38-second mobile demo.](assets/openmuse-demo.gif)](assets/openmuse-mobile-demo.mp4)
 
 **[Watch the mobile demo · 38 seconds](assets/openmuse-mobile-demo.mp4)**
 
 </div>
 
-> **Alpha, for self-hosting and building on.** The default runs locally with fictional data and no API keys. Open-ended reasoning, live Google accounts, and CopilotKit Rich Threads require their own configuration. See [what is verified](docs/VERIFICATION.md) and the [roadmap](ROADMAP.md).
+> **Alpha, for self-hosting and building on.** Open-ended reasoning, live Google accounts, and CopilotKit Rich Threads require their own configuration. See [what is verified](docs/VERIFICATION.md) and the [roadmap](ROADMAP.md).
 
 ## Demo
 
-A 38-second native iPhone walkthrough, framed in 16:9: the agent's browser, Linux terminal, saved files, PDF reader, rich conversation, and goals. Captured from the working app with fictional personal data and real public websites; cut and accelerated for pace.
+Ask OpenMuse to find interesting stories on Hacker News or summarize CopilotKit. The agent opens and reads the real page, shows its browser inline, and replies in the conversation. **Take control** opens that same session when you need it.
+
+The 38-second iPhone recording uses [AI Mock](https://github.com/CopilotKit/aimock) for scripted model responses; Chromium navigation, page reads, and tool results are real. Framed in 16:9, with cuts and pacing for readability.
 
 [Watch the MP4](assets/openmuse-mobile-demo.mp4) · [Recording details and reproduction](docs/DEMO.md)
 
@@ -54,7 +56,7 @@ The [feature inventory](docs/FEATURES.md) maps the Muse references to the implem
 **Requirements:** Node 24 LTS and pnpm 11.19.0. The local app needs no model, Google account, Docker, or Intelligence subscription.
 
 ```sh
-git clone https://github.com/jerelvelarde/openmuse.git
+git clone https://github.com/CopilotKit/OpenMuse.git openmuse
 cd openmuse
 pnpm install --frozen-lockfile
 cp .env.example .env
@@ -74,7 +76,7 @@ Open [localhost:8081](http://localhost:8081). The API runs at [localhost:8787/ap
 1. In Chat, send **“Complete the permission slip”**. Open the task, supply fictional form values, inspect the saved PDF, and review the prepared reply. This writes only to the local mailbox.
 2. In **Goals → Track**, create a built-in availability watch, then change the built-in test page to trigger an alert.
 3. In **Menu → Delegate task → Finance**, use **Try example transactions** to create an interactive spending tracker.
-4. Start the [browser worker](#browser-worker), then open **Computer** and navigate to `https://example.com`.
+4. Start the [browser worker](#browser-worker) and configure a model, then ask **“Check out Hacker News for cool stuff”** or **“Summarize copilotkit.ai”**. Follow the browser inline and use **Take control** to open its session. For a key-free version of this flow, follow the [AI Mock demo setup](docs/DEMO.md#run-the-agent-browser-demo).
 
 For iOS or Android, use `pnpm --dir apps/mobile ios` or `pnpm --dir apps/mobile android`. Xcode or Android tooling is required. The PDF reader needs an Expo development build; use [native setup](apps/mobile/README.md).
 

@@ -28,6 +28,8 @@ const failureSchema = z.object({
   message: z.string(),
   createdAt: z.string(),
 });
+type ChatBrowser = { id: string; sessionId: string };
+
 export class BrowserService {
   private readonly queues = new Map<string, Promise<unknown>>();
   constructor(
@@ -45,7 +47,8 @@ export class BrowserService {
       if (this.queues.get(id) === next) this.queues.delete(id);
     }
   }
-  private async request(path: string, body?: unknown) {
+  private async request(path: string, body?: unknown, signal?: AbortSignal) {
+    signal?.throwIfAborted();
     if (!this.config.workerUrl || !this.config.workerToken)
       throw new AppError("Browser worker is not configured. Start it using the setup guide.", 503);
     let response: Response;
@@ -57,9 +60,12 @@ export class BrowserService {
           "Content-Type": "application/json",
         },
         body: body === undefined ? undefined : JSON.stringify(body),
-        signal: AbortSignal.timeout(45000),
+        signal: signal
+          ? AbortSignal.any([signal, AbortSignal.timeout(45000)])
+          : AbortSignal.timeout(45000),
       });
     } catch {
+      signal?.throwIfAborted();
       throw new AppError(
         "Browser worker is unavailable. Check that its container is running.",
         503,
@@ -107,11 +113,11 @@ export class BrowserService {
     });
     return this.reopen(owner, id, url);
   }
-  private async openOwned(owner: string, id: string, url?: string) {
+  private async openOwned(owner: string, id: string, url?: string, signal?: AbortSignal) {
     const value = await this.get(owner, id);
     const target = url ?? value.url;
     try {
-      const response = await this.request("/sessions", { id, url: target });
+      const response = await this.request("/sessions", { id, url: target }, signal);
       return await this.save(owner, await response.json(), id);
     } catch (error) {
       await this.save(
@@ -128,9 +134,11 @@ export class BrowserService {
   navigate(owner: string, id: string, url: string) {
     return this.reopen(owner, id, url);
   }
-  private async readOwned(owner: string, id: string) {
+  private async readOwned(owner: string, id: string, signal?: AbortSignal) {
     const session = await this.get(owner, id);
-    const result = readSchema.parse(await (await this.request(`/sessions/${id}/read`)).json());
+    const result = readSchema.parse(
+      await (await this.request(`/sessions/${id}/read`, undefined, signal)).json(),
+    );
     await this.save(
       owner,
       {
@@ -152,6 +160,40 @@ export class BrowserService {
     return this.serial(id, async () => {
       if (existingId) await this.openOwned(owner, id, url);
       return { sessionId: id, ...(await this.readOwned(owner, id)) };
+    });
+  }
+  async observeForThread(owner: string, threadId: string, url: string, signal?: AbortSignal) {
+    signal?.throwIfAborted();
+    // Persist the association before contacting the worker so failed/lost responses
+    // and later chat turns keep using the same profile instead of exhausting its limit.
+    const association =
+      (await this.db.get<ChatBrowser>(owner, "chat-browsers", threadId)) ??
+      (await this.db.insertIfAbsent(owner, "chat-browsers", {
+        id: threadId,
+        sessionId: randomUUID(),
+      })) ??
+      (await this.db.get<ChatBrowser>(owner, "chat-browsers", threadId));
+    if (!association) throw new AppError("Could not reserve the chat browser session", 500);
+    const id = association.sessionId;
+    await this.db.insertIfAbsent(owner, "browsers", {
+      id,
+      url,
+      title: "New browser session",
+      status: "idle",
+      updatedAt: new Date().toISOString(),
+    });
+    return this.serial(id, async () => {
+      signal?.throwIfAborted();
+      await this.openOwned(owner, id, url, signal);
+      signal?.throwIfAborted();
+      const page = await this.readOwned(owner, id, signal);
+      signal?.throwIfAborted();
+      return {
+        sessionId: id,
+        ...page,
+        text: page.text.slice(0, 30_000),
+        truncated: page.truncated || page.text.length > 30_000,
+      };
     });
   }
   async close(owner: string, id: string) {

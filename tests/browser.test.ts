@@ -1,22 +1,21 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { mkdir, mkdtemp, rm, truncate, writeFile } from "node:fs/promises";
-import { createServer, request } from "node:http";
+import { request } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
-import test, { type TestContext } from "node:test";
+import test from "node:test";
 import { createApp } from "../apps/server/src/app.ts";
 import { Auth } from "../apps/server/src/auth.ts";
 import { BrowserService } from "../apps/server/src/browser.ts";
-import type { Config } from "../apps/server/src/config.ts";
-import { createStore } from "../apps/server/src/db.ts";
 import { Files } from "../apps/server/src/files.ts";
 import { capturePdfDownload, readDownloadFailures } from "../apps/worker/src/downloads.ts";
 import { isPublicIp, validatePublicUrl } from "../apps/worker/src/network.ts";
 import { startEgressProxy } from "../apps/worker/src/proxy.ts";
 import { createWorkerServer } from "../apps/worker/src/server.ts";
 import type { BrowserSession } from "../packages/domain/src/index.ts";
+import { browserFixture } from "./helpers/browser.ts";
 
 const sessionId = "00000000-0000-4000-8000-000000000001";
 const savedSession: BrowserSession = {
@@ -26,47 +25,6 @@ const savedSession: BrowserSession = {
   status: "active",
   updatedAt: "2026-09-15T00:00:00.000Z",
 };
-
-async function browserFixture(
-  t: TestContext,
-  handle: (path: string, body: Record<string, unknown>) => { status?: number; data: unknown },
-) {
-  const server = createServer(async (request, response) => {
-    const chunks = [];
-    for await (const chunk of request) chunks.push(Buffer.from(chunk));
-    const body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString()) : {};
-    const result = handle(request.url ?? "", body);
-    response.writeHead(result.status ?? 200, { "content-type": "application/json" });
-    response.end(JSON.stringify(result.data));
-  });
-  server.listen(0, "127.0.0.1");
-  await once(server, "listening");
-  const address = server.address();
-  assert(address && typeof address !== "string");
-  const directory = await mkdtemp(join(tmpdir(), "openmuse-browser-service-"));
-  const db = await createStore();
-  const config: Config = {
-    mode: "sample",
-    port: 8787,
-    host: "127.0.0.1",
-    publicUrl: "http://localhost:8787",
-    dataDir: directory,
-    agentBackend: "sample",
-    googleRedirectUri: "http://localhost:8787/api/google/callback",
-    allowedOrigins: [],
-    workerUrl: `http://127.0.0.1:${address.port}`,
-    workerToken: "test-worker-token-at-least-32-characters",
-  };
-  const auth = new Auth(db, config, "test-signing-key");
-  const service = new BrowserService(db, config, auth, new Files(db, config, auth));
-  t.after(async () => {
-    server.closeAllConnections();
-    await new Promise<void>((resolve) => server.close(() => resolve()));
-    await db.close();
-    await rm(directory, { recursive: true, force: true });
-  });
-  return { db, service, config };
-}
 
 test("browser API reopens an owned profile at the edited address and renews console access", async (t) => {
   const calls: { path: string; body: Record<string, unknown> }[] = [];
@@ -198,6 +156,111 @@ test("browser observations reuse an owned profile and reject unowned reads", asy
   const fresh = await service.observe("owner", read.url);
   assert.notEqual(fresh.sessionId, sessionId);
   assert.equal(fresh.text, read.text);
+});
+
+test("chat browser reads reuse a persisted owned profile across turns and service restarts", async (t) => {
+  const calls: { path: string; body: Record<string, unknown> }[] = [];
+  let currentUrl = savedSession.url;
+  const { db, service, config } = await browserFixture(t, (path, body) => {
+    calls.push({ path, body });
+    if (path.endsWith("/read"))
+      return {
+        data: { url: currentUrl, title: "Read page", text: "x".repeat(30_001), truncated: false },
+      };
+    currentUrl = String(body.url);
+    return { data: { ...savedSession, id: body.id, url: currentUrl } };
+  });
+  const first = await service.observeForThread("owner", "chat-thread", "https://example.org/first");
+  assert.equal(first.text.length, 30_000);
+  assert.equal(first.truncated, true);
+  const auth = new Auth(db, config, "test-signing-key");
+  const restarted = new BrowserService(db, config, auth, new Files(db, config, auth));
+  for (const status of ["active", "closed", "error", "idle"] as const) {
+    await db.put("owner", "browsers", { ...(await service.get("owner", first.sessionId)), status });
+    const next = await restarted.observeForThread(
+      "owner",
+      "chat-thread",
+      `https://example.org/${status}`,
+    );
+    assert.equal(next.sessionId, first.sessionId);
+    assert.equal(next.url, `https://example.org/${status}`);
+  }
+  assert.equal((await db.list("owner", "browsers")).length, 1);
+  assert.equal(calls.filter((call) => call.path === "/sessions").length, 5);
+  const otherOwner = await restarted.observeForThread("stranger", "chat-thread", savedSession.url);
+  assert.notEqual(otherOwner.sessionId, first.sessionId);
+  await assert.rejects(restarted.get("stranger", first.sessionId), { status: 404 });
+});
+
+test("chat browser retries failed navigation using the reserved profile", async (t) => {
+  const ids: unknown[] = [];
+  let failing = true;
+  const { db, service } = await browserFixture(t, (path, body) => {
+    if (path.endsWith("/read"))
+      return {
+        data: {
+          url: savedSession.url,
+          title: "Read page",
+          text: "Actual contents",
+          truncated: true,
+        },
+      };
+    ids.push(body.id);
+    return failing
+      ? { status: 502, data: { error: { message: "Page unavailable" } } }
+      : { data: { ...savedSession, id: body.id } };
+  });
+  await assert.rejects(
+    service.observeForThread("owner", "chat-thread", savedSession.url),
+    /Page unavailable/,
+  );
+  assert.equal((await db.list<BrowserSession>("owner", "browsers"))[0]?.status, "error");
+  failing = false;
+  const result = await service.observeForThread("owner", "chat-thread", savedSession.url);
+  assert.deepEqual(ids, [result.sessionId, result.sessionId]);
+  assert.equal(result.text, "Actual contents");
+  assert.equal(result.truncated, true);
+});
+
+test("concurrent chat reads keep each navigation paired with its page read", async (t) => {
+  let currentUrl = savedSession.url;
+  const { db, service } = await browserFixture(t, (path, body) => {
+    if (path.endsWith("/read"))
+      return { data: { url: currentUrl, title: currentUrl, text: currentUrl, truncated: false } };
+    currentUrl = String(body.url);
+    return { data: { ...savedSession, id: body.id, url: currentUrl } };
+  });
+  const urls = ["https://example.org/one", "https://example.org/two"];
+  const results = await Promise.all(
+    urls.map((url) => service.observeForThread("owner", "chat-thread", url)),
+  );
+  assert.deepEqual(
+    results.map((result) => result.text),
+    urls,
+  );
+  assert.equal(results[0].sessionId, results[1].sessionId);
+  assert.equal((await db.list("owner", "browsers")).length, 1);
+});
+
+test("cancelled chat browser requests do not start navigation or a follow-up read", async (t) => {
+  const controller = new AbortController();
+  const calls: string[] = [];
+  const { db, service } = await browserFixture(t, (path, body) => {
+    calls.push(path);
+    controller.abort();
+    return { data: { ...savedSession, id: body.id } };
+  });
+  await assert.rejects(
+    service.observeForThread("owner", "chat-thread", savedSession.url, controller.signal),
+    { name: "AbortError" },
+  );
+  assert.deepEqual(calls, ["/sessions"]);
+  await assert.rejects(
+    service.observeForThread("owner", "other-thread", savedSession.url, controller.signal),
+    { name: "AbortError" },
+  );
+  assert.deepEqual(calls, ["/sessions"]);
+  assert.equal((await db.list("owner", "browsers")).length, 1);
 });
 
 test("browser read fails on missing page text instead of inventing observation content", async (t) => {
