@@ -40,7 +40,9 @@ September 15, 2026 · Agent browser and experience release after `0.1.0-alpha` �
 
 ## Release fixes and interface polish
 
-- The composer remains available during replies, with a visible follow-up queue, explicit stop/resume behavior, retained drafts while navigating, and a control for returning to the latest message.
+- The composer remains available during replies. Send changes to Stop in the same input pill, with a visible follow-up queue, retained drafts while navigating, and a control for returning to the latest message.
+- The composer browser acceptance check verified the shared button position, enabled Stop with an empty draft, draft retention after stopping, immediate sending afterward with no held follow-ups, and reset to Send on natural completion. It reported no runtime errors. The iPhone simulator recording also shows the inline stop control. All seven [CI jobs for this change](https://github.com/CopilotKit/openmuse/actions/runs/35021854345) passed.
+- The refreshed [mobile and web demos](DEMO.md) remain 38 and 40 seconds at 1920 × 1080, with matching animated previews. All video and GIF frames were checked for the removed footer captions; the web video and cover also retain the cleared title area.
 - The avatar opens activity and approvals. Name, tone, avatar color, and background-update preferences persist. Sheets adapt to narrow screens; icon targets, text contrast, and message spacing are refined.
 - Computer separates Browser, Terminal, and Files. Command receipts remain visible, **New command** reopens the input, and an explicit straight-quote correction handles pasted smart quotes. Command and file drafts persist across sheet navigation; late file responses cannot overwrite a newer editor.
 - Browser takeover uses a light console with live connection state, keyboard controls, retained text after errors, and visibility-aware previews. Regression tests verify edited-address reopen, signed-link renewal after 16 minutes, and owner boundaries. The console was inspected on web and the iPhone simulator.

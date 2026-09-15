@@ -1,8 +1,10 @@
 # Demos
 
+Updated September 15, 2026. Both recordings show the current composer: the send arrow changes to a stop square inside the input pill while OpenMuse replies, then returns when the run ends.
+
 ## Mobile
 
-[Watch the 38-second MP4](../assets/openmuse-mobile-demo.mp4) · [Animated hero](../assets/openmuse-demo.gif) · [Cover image](../assets/openmuse-preview.png).
+[Watch the 38-second MP4](../assets/demos/2026-09-15/mobile.mp4) · [Animated hero](../assets/demos/2026-09-15/mobile.gif) · [Cover image](../assets/demos/2026-09-15/mobile.png).
 
 **OpenMuse 🪁 — ask it to browse, follow along in chat, and take control when you need to.** The native iPhone recording is framed in a 1920 × 1080 (16:9) canvas, with a cream, blue, and lilac background and captions for sound-off viewing.
 
@@ -15,7 +17,7 @@ The model responses use [CopilotKit AI Mock](https://github.com/CopilotKit/aimoc
 | 0:00–0:04 | Ask OpenMuse to explore Hacker News |
 | 0:04–0:09 | Read highlights from the live page |
 | 0:09–0:15 | Ask it to summarize CopilotKit |
-| 0:15–0:21 | Follow the inline browser and result |
+| 0:15–0:21 | Follow the inline browser and result, with Stop inside the input pill |
 | 0:21–0:31 | Take control of the same live browser |
 | 0:31–0:38 | Return to chat and the OpenMuse repository |
 
@@ -30,13 +32,13 @@ Captures are trimmed and paced for readability, including brief slowdowns of the
 
 ## Desktop web
 
-[Watch the 40-second web MP4](../assets/openmuse-web-demo.mp4) · [Animated preview](../assets/openmuse-web-demo.gif) · [Cover image](../assets/openmuse-web-preview.png).
+[Watch the 40-second web MP4](../assets/demos/2026-09-15/web.mp4) · [Animated preview](../assets/demos/2026-09-15/web.gif) · [Cover image](../assets/demos/2026-09-15/web.png).
 
 A separate recording of the actual desktop web app, placed below the mobile demo in the README. The 1440 × 810 browser capture sits inside a 1920 × 1080 canvas with the same cream, blue, and lilac background and OpenMuse 🪁 branding.
 
 | Time | Scene |
 | --- | --- |
-| 0:00–0:05 | Type a request to explore Hacker News |
+| 0:00–0:05 | Ask about Hacker News; the send arrow changes to Stop |
 | 0:05–0:11 | Follow the agent’s inline browser |
 | 0:11–0:16 | Read highlights from the live page |
 | 0:16–0:23 | Ask about CopilotKit and see its browser card |
@@ -45,6 +47,12 @@ A separate recording of the actual desktop web app, placed below the mobile demo
 | 0:35–0:40 | Return to the conversation |
 
 This recording uses the same AI Mock model and real Chromium tool flow described above. It captures a production web export in a separate local workspace, with actual typing, clicks, and scrolling. Cuts, brief holds, and speed changes shorten waiting time. No development overlays or private workspace information appear in the published media.
+
+## Composer interaction
+
+The primary button stays in the same place through each reply. Its accessible label changes from **Send message** to **Stop reply** while running. Stopping preserves the current draft. When there are no held follow-ups, sending a new message continues immediately; an existing paused queue resumes through **Send queued messages**.
+
+To check interruption yourself, send either supported prompt, type a follow-up while the agent is replying, and tap the stop square. Confirm the draft remains, then send it once the arrow returns. The recordings show the send/stop state change; this interruption check is a separate acceptance step.
 
 ## Run the agent browser demo
 
