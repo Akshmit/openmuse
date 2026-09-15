@@ -12,13 +12,13 @@ Built with CopilotKit React Native for iOS, Android, and web.
 [![CI](https://github.com/CopilotKit/OpenMuse/actions/workflows/ci.yml/badge.svg)](https://github.com/CopilotKit/OpenMuse/actions/workflows/ci.yml)
 [![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[![OpenMuse 🪁 — Ask it to browse. Watch the 38-second mobile demo.](assets/openmuse-demo.gif)](assets/openmuse-mobile-demo.mp4)
+[![OpenMuse 🪁 — Ask it to browse. Watch the 38-second mobile demo.](assets/demos/2026-09-15/mobile.gif)](assets/demos/2026-09-15/mobile.mp4)
 
-**[Watch the mobile demo · 38 seconds](assets/openmuse-mobile-demo.mp4)**
+**[Watch the mobile demo · 38 seconds](assets/demos/2026-09-15/mobile.mp4)**
 
-[![OpenMuse 🪁 on the web — Watch the 40-second desktop demo.](assets/openmuse-web-demo.gif)](assets/openmuse-web-demo.mp4)
+[![OpenMuse 🪁 on the web — Watch the 40-second desktop demo.](assets/demos/2026-09-15/web.gif)](assets/demos/2026-09-15/web.mp4)
 
-**[Watch the web demo · 40 seconds](assets/openmuse-web-demo.mp4)**
+**[Watch the web demo · 40 seconds](assets/demos/2026-09-15/web.mp4)**
 
 </div>
 
@@ -28,9 +28,9 @@ Built with CopilotKit React Native for iOS, Android, and web.
 
 Ask OpenMuse to find interesting stories on Hacker News or summarize CopilotKit. The agent opens and reads the real page, shows its browser inline, and replies in the conversation. **Take control** opens that same session when you need it.
 
-The 38-second iPhone and 40-second desktop web recordings use [AI Mock](https://github.com/CopilotKit/aimock) for scripted model responses; Chromium navigation, page reads, and tool results are real. Framed in 16:9, with cuts and pacing for readability.
+The 38-second iPhone and 40-second desktop web demos show the current interface, framed in 16:9. The send arrow becomes a stop square inside the input pill while the agent replies, then switches back. Stopping keeps your draft intact. See the [recording notes](docs/DEMO.md) for the model setup and reproduction steps.
 
-[Mobile MP4](assets/openmuse-mobile-demo.mp4) · [Web MP4](assets/openmuse-web-demo.mp4) · [Recording details and reproduction](docs/DEMO.md)
+[Mobile MP4](assets/demos/2026-09-15/mobile.mp4) · [Web MP4](assets/demos/2026-09-15/web.mp4) · [Recording details and reproduction](docs/DEMO.md)
 
 ## What it is
 
@@ -42,7 +42,7 @@ The computer combines **persistent Chromium and an optional Linux workspace**. T
 
 | Surface | What runs in this alpha |
 | --- | --- |
-| **Chat** | CopilotKit headless chat with streamed AG-UI events, a visible follow-up queue, retained drafts, delegated tasks, and inline browser, PDF, plan, and finance cards. |
+| **Chat** | CopilotKit headless chat with streamed AG-UI events, send/stop in one input pill, a visible follow-up queue, retained drafts, delegated tasks, and inline browser, PDF, plan, and finance cards. |
 | **Agent computer** | Persistent browser profiles and takeover console; optional isolated Linux terminal, saved command receipts, editable workspace files, and PDF transfer. |
 | **Activity** | Durable task plans, progress, input requests, pause/resume/cancel/retry, approvals, and saved receipts. SQL leases recover interrupted work. |
 | **Ideas** | Suggestions with source evidence; edit, accept, or dismiss. Sent replies and completed matching work are excluded. |
