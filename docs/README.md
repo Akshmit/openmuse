@@ -1,0 +1,13 @@
+# OpenMuse documentation
+
+- [Quick start and architecture](../README.md)
+- [Native iOS / Android / web setup](../apps/mobile/README.md)
+- [Browser worker, API, persistence, and network boundary](../apps/worker/README.md)
+- [CopilotKit Rich Threads](RICH-THREADS.md)
+- [OpenBot integration contract](OPENBOT-INTEGRATION.md)
+- [Feature inventory](FEATURES.md)
+- [Verification and limitations](VERIFICATION.md)
+- [Demo reproduction](DEMO.md)
+- [Roadmap](../ROADMAP.md)
+- [Contributing](../CONTRIBUTING.md)
+- [Security](../SECURITY.md)
