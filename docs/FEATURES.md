@@ -78,7 +78,7 @@ The app logos are illustrative evidence, not an authoritative supported-connecto
 | 4 — Extensions and transactions | WhatsApp/Instagram adapters, versioned generated tools, 1Password adapter, booking/customer-service recipes, payment-provider handoff | Each integration has a tested authentication flow and capability limits; generated tools run in isolation; payment features require an actual supported provider |
 | 5 — Hosted operation and isolation | Per-user VM lifecycle, independent egress enforcement, quotas, optional billing, retention/export controls and reporting | Isolation, recovery, authorization and operational checks pass; deployment guarantees describe the infrastructure actually used |
 
-The current build includes native/web screens, server-owned chat tools, a leased task worker, Ideas, Goals/Tracking, memory, artifacts, Google/PDF adapters, persistent reviews, a browser worker and a disabled OpenBot adapter. This does not complete a phase or establish live-provider parity. Provider purchase protection, confidential-computing guarantees, account availability and approval of third-party integrations require their own supported services or infrastructure.
+The current build includes native/web screens, server-owned chat tools, a leased task worker, Ideas, Goals/Tracking, memory, artifacts, Google/PDF adapters, persistent reviews, a browser worker, a private Docker Linux computer, and a disabled OpenBot adapter. This does not complete a phase or establish live-provider parity. Provider purchase protection, confidential-computing guarantees, account availability and approval of third-party integrations require their own supported services or infrastructure.
 
 For the current release boundary, see the [roadmap](../ROADMAP.md).
 
@@ -90,11 +90,14 @@ For the current release boundary, see the [roadmap](../ROADMAP.md).
 | Ideas / personal context | Source-backed mail/goal rules, accept/edit/dismiss, identity, editable/forgettable memories | Broader model-derived cross-connector suggestions |
 | Goals / Tracking | Milestones, recurring watches, observations, retry/backoff, pause and cancellation | Adaptive long-term planning and calendar-driven reminders |
 | Browser | Persistent Chromium, public page reads, snapshots, console takeover, PDF downloads | Autonomous interactive booking and per-person VM orchestration |
+| Linux computer | Nonroot Docker container, bounded bash/Python/Node/git commands, saved output and exit receipts, persistent workspace files, text editing, PDF import/export | Interactive terminal, desktop apps, controlled egress, disk quotas and stronger VM isolation |
 | Gmail / Calendar | Google OAuth; complete threads; saved drafts; calendar/event CRUD with reviewed versions | Live Google acceptance, recurrence editing, other connectors |
 | PDF job | Durable import, typed input request, filled-copy preview, reviewed reply, receipt | OCR/scanned forms and additional PDF field types |
-| Generated results | Plans/reports/comparisons and finance CSV metrics, categories, transactions | Sandboxed arbitrary generated tools, image/audio generation |
+| Generated results | Plans/reports/comparisons, finance CSV metrics, and scripts in the private Linux workspace | Managed tool installation/versioning and image/audio generation |
 | Notifications | Durable in-app inbox, source-linked change alerts, restart reconciliation | APNs/FCM/device push delivery |
 | Connectors | Searchable capability/status catalogue, Google connection, browser worker | Plaid, health, Instagram, WhatsApp and partner APIs |
 | OpenBot | Disabled adapter with pinned protocol/identity tests | Live session bridge, routines and computer backend wiring |
+
+The Linux computer is disabled until configured on the server and has no network access. It is a single-owner container with a persistent `/workspace`, separate from the browser worker; see [computer setup and limits](COMPUTER.md). It is not a graphical desktop or a full OS VM.
 
 The implementation and validation details are in [VERIFICATION.md](VERIFICATION.md). The historical phase tables above remain a complete inventory, not a claim that every advertised capability is present.

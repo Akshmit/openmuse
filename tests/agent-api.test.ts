@@ -77,6 +77,22 @@ test("agent API requires a session and reports the actual worker state", async (
   assert.equal(workspace.identity.tone, "warm");
 });
 
+test("the main Rich Thread survives reopening and concurrent initialization", async () => {
+  assert.equal((await server.app.request("/api/main-thread")).status, 401);
+  const responses = await Promise.all(
+    Array.from({ length: 3 }, () => server.app.request("/api/main-thread", { headers: headers() })),
+  );
+  const threads = await Promise.all(responses.map((response) => response.json()));
+  assert.ok(threads.every((thread) => thread.threadId === threads[0].threadId));
+  assert.equal(threads[0].existing, false);
+  const reopened = await (
+    await server.app.request("/api/main-thread", { headers: headers() })
+  ).json();
+  assert.equal(reopened.threadId, threads[0].threadId);
+  assert.equal(reopened.existing, false);
+  assert.equal(await db.get("other-user", "conversation-settings", "main"), null);
+});
+
 test("task detail and controls stay scoped to the authenticated owner", async () => {
   const task = await read<AgentTask>(
     "/tasks",
@@ -179,10 +195,21 @@ test("memories can be edited and forgotten while identity changes persist", asyn
   const privateIdentity = await db.get("other-user", "agent-settings", "identity");
   assert.equal((await request("/memories/private-memory", { text: "Overwrite" })).status, 404);
   assert.equal((await request("/memories/private-memory/forget", {})).status, 404);
-  await read("/identity", { name: "Nova", tone: "concise" });
+  await read("/identity", {
+    name: "Nova",
+    tone: "concise",
+    avatar: "lilac",
+    showChatUpdates: false,
+  });
   const snapshot = await read<AgentWorkspace>("");
   assert.equal(snapshot.identity.name, "Nova");
   assert.equal(snapshot.identity.tone, "concise");
+  assert.equal(snapshot.identity.avatar, "lilac");
+  assert.equal(snapshot.identity.showChatUpdates, false);
+  assert.equal(
+    (await request("/identity", { name: "Nova", tone: "warm", avatar: "invalid" })).status,
+    422,
+  );
   assert.equal(snapshot.memories.find((item) => item.id === memory.id)?.text, updated.text);
   assert.deepEqual(await db.get("other-user", "agent-settings", "identity"), privateIdentity);
   assert.deepEqual(await read(`/memories/${memory.id}/forget`, {}), { ok: true });

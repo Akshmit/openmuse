@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
 import test, { type TestContext } from "node:test";
+import { createApp } from "../apps/server/src/app.ts";
 import { Auth } from "../apps/server/src/auth.ts";
 import { BrowserService } from "../apps/server/src/browser.ts";
 import type { Config } from "../apps/server/src/config.ts";
@@ -64,8 +65,62 @@ async function browserFixture(
     await db.close();
     await rm(directory, { recursive: true, force: true });
   });
-  return { db, service };
+  return { db, service, config };
 }
+
+test("browser API reopens an owned profile at the edited address and renews console access", async (t) => {
+  const calls: { path: string; body: Record<string, unknown> }[] = [];
+  const { db, config } = await browserFixture(t, (path, body) => {
+    calls.push({ path, body });
+    return { data: { ...savedSession, url: body.url } };
+  });
+  const { app, auth, agent } = await createApp(db, config);
+  t.after(() => agent.stop());
+  const { token } = await auth.session();
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  await db.put("local-user", "browsers", { ...savedSession, status: "closed" });
+  const path = `/api/browsers/${sessionId}`;
+  const opened = await app.request(`${path}/reopen`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ url: "https://example.org/" }),
+  });
+  assert.equal(opened.status, 200);
+  assert.equal((await opened.json()).url, "https://example.org/");
+  assert.deepEqual(calls[0], {
+    path: "/sessions",
+    body: { id: sessionId, url: "https://example.org/" },
+  });
+  assert.equal((await app.request(`${path}/reopen`, { method: "POST", headers })).status, 200);
+  assert.equal(
+    calls[1]?.body.url,
+    "https://example.org/",
+    "bodyless reopen keeps the saved address",
+  );
+
+  const start = Date.now();
+  const clock = t.mock.method(Date, "now", () => start);
+  const previous: BrowserSession = await (await app.request(path, { headers })).json();
+  assert.ok(previous.consoleUrl);
+  clock.mock.mockImplementation(() => start + 16 * 60_000);
+  assert.equal((await app.request(previous.consoleUrl)).status, 401);
+  const renewed: BrowserSession = await (await app.request(path, { headers })).json();
+  assert.ok(renewed.consoleUrl);
+  assert.notEqual(renewed.consoleUrl, previous.consoleUrl);
+  const console = await app.request(renewed.consoleUrl);
+  assert.equal(console.status, 200);
+  assert.match(await console.text(), /Text to type in browser/);
+  assert.equal((await app.request(path)).status, 401);
+  const hiddenId = "00000000-0000-4000-8000-000000000099";
+  await db.put("someone-else", "browsers", { ...savedSession, id: hiddenId });
+  assert.equal((await app.request(`/api/browsers/${hiddenId}`, { headers })).status, 404);
+  assert.equal(
+    (await app.request(`/api/browsers/${hiddenId}/reopen`, { method: "POST", headers, body: "{}" }))
+      .status,
+    404,
+  );
+  assert.equal(calls.length, 2, "renewal and rejected requests never navigate the browser");
+});
 
 test("server reopens the same worker UUID regardless of stale local session status", async (t) => {
   const calls: { path: string; body: Record<string, unknown> }[] = [];

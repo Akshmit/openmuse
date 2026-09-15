@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { BrowserSession } from "../../../packages/domain/src/index.ts";
 import type { Auth } from "./auth.ts";
+import { browserConsole } from "./browser-console.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
@@ -209,16 +210,6 @@ export class BrowserService {
     return { files: saved, failures };
   }
   console(owner: string, id: string) {
-    const preview = JSON.stringify(this.auth.sign(owner, `/api/browsers/${id}/preview`)).replace(
-      /</g,
-      "\\u003c",
-    );
-    return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OpenMuse browser</title><style>body{margin:0;background:#f5f5f2;color:#17262a;font:14px system-ui}header{padding:12px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #ddd}button,input{border:1px solid #d4dbdc;border-radius:9px;padding:9px;background:white;color:inherit}input{flex:1;min-width:160px}img{display:block;width:100%;height:auto;cursor:crosshair}#error{padding:10px;color:#943b2c}small{padding:8px;display:block}</style><header><input id="text" aria-label="Text to type in browser" placeholder="Type into the selected browser field"><button id="type">Type text</button><button data-key="Enter">Enter</button><button data-key="Tab">Tab</button><button data-key="Backspace">⌫</button><button id="up">↑ Scroll</button><button id="down">↓ Scroll</button></header><small>Click the page to control this remote browser. Its profile belongs to this session.</small><div id="error" role="alert"></div><img id="screen" alt="Live browser session, click to interact"><script>
-const image=document.querySelector('#screen'),error=document.querySelector('#error');let busy=false;let imageUrl;
-async function refresh(){if(busy)return;busy=true;try{const r=await fetch(${preview},{cache:'no-store'});if(!r.ok)throw new Error('Browser preview unavailable. Reopen the session from OpenMuse.');const blob=await r.blob();if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=URL.createObjectURL(blob);image.src=imageUrl;}catch(e){error.textContent=e.message;}finally{busy=false;}}
-async function input(body){error.textContent='';try{const r=await fetch(location.href,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok){const data=await r.json();throw new Error(data.error||'Browser action failed');}await refresh();}catch(e){error.textContent=e.message;}}
-image.onclick=e=>{const r=image.getBoundingClientRect();input({type:'click',x:Math.round((e.clientX-r.left)*1280/r.width),y:Math.round((e.clientY-r.top)*800/r.height)});};
-document.querySelector('#type').onclick=()=>{const field=document.querySelector('#text');input({type:'text',text:field.value});field.value='';};document.querySelectorAll('[data-key]').forEach(b=>b.onclick=()=>input({type:'key',key:b.dataset.key}));document.querySelector('#up').onclick=()=>input({type:'scroll',deltaY:-600});document.querySelector('#down').onclick=()=>input({type:'scroll',deltaY:600});refresh();setInterval(refresh,1800);
-</script></html>`;
+    return browserConsole(this.auth.sign(owner, `/api/browsers/${id}/preview`));
   }
 }

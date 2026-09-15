@@ -117,6 +117,8 @@ export interface AgentNotification {
 export interface AgentIdentity {
   name: string;
   tone: "warm" | "concise" | "thoughtful";
+  avatar?: "sky" | "sand" | "lilac";
+  showChatUpdates?: boolean;
 }
 export interface AgentWorkspace {
   tasks: AgentTask[];
