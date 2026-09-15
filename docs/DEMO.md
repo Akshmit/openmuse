@@ -6,7 +6,7 @@
 
 **OpenMuse 🪁 — ask it to browse, follow along in chat, and take control when you need to.** The native iPhone recording is framed in a 1920 × 1080 (16:9) canvas, with a cream, blue, and lilac background and captions for sound-off viewing.
 
-The model responses use [CopilotKit AI Mock](https://github.com/CopilotKit/aimock). The app runs its actual CopilotKit agent and `browse_web` tool against a real Chromium worker. The script requests a page, waits for the real tool result, and extracts headlines or overview text from that result. It does not supply browser results or invent page content. The video also labels the model as AI Mock.
+The model responses use [CopilotKit AI Mock](https://github.com/CopilotKit/aimock). The app runs its actual CopilotKit agent and `browse_web` tool against a real Chromium worker. The script requests a page, waits for the real tool result, and extracts headlines or overview text from that result. It does not supply browser results or invent page content.
 
 ### What the mobile recording shows
 
@@ -87,7 +87,7 @@ xcrun simctl io booted recordVideo --codec=h264 openmuse-recording.mp4
 # Interact with the app. Press Control-C to finish the video.
 ```
 
-Capture at native resolution, trim idle time, and frame the portrait capture inside a 16:9 canvas. Show the chat request and its real tool result. Keep the model's mocked status visible if you use this runner. Check the final video for development reload banners and private content before publishing.
+Capture at native resolution, trim idle time, and frame the portrait capture inside a 16:9 canvas. Show the chat request and its real tool result. Describe the model setup in the accompanying recording notes. Check the final video for development reload banners and private content before publishing.
 
 ### Web
 
@@ -98,6 +98,6 @@ EXPO_PUBLIC_API_URL=http://127.0.0.1:8788 pnpm --dir apps/mobile exec expo expor
 python3 -m http.server 8081 --bind 127.0.0.1 --directory apps/mobile/dist/web
 ```
 
-Use port 8081 when the development server is stopped. `--clear` ensures the export uses the requested API URL. Open the page in a clean desktop browser, record the two prompts and takeover flow at 1440 × 810 or larger, and keep the AI Mock disclosure visible in the final edit. Scroll to keep the browser card and resulting text readable.
+Use port 8081 when the development server is stopped. `--clear` ensures the export uses the requested API URL. Open the page in a clean desktop browser and record the two prompts and takeover flow at 1440 × 810 or larger. Describe the model setup in the accompanying recording notes. Scroll to keep the browser card and resulting text readable.
 
 The original [75-second alpha walkthrough](https://github.com/jerelvelarde/openmuse/releases/download/v0.1.0-alpha/openmuse-demo.mp4) remains available as a historical release archive. OpenMuse's own artwork is included; Meta reference screenshots and mascot are not redistributed.
