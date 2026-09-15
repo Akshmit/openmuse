@@ -16,6 +16,10 @@ Built with CopilotKit React Native for iOS, Android, and web.
 
 **[Watch the mobile demo · 38 seconds](assets/openmuse-mobile-demo.mp4)**
 
+[![OpenMuse 🪁 on the web — Watch the 40-second desktop demo.](assets/openmuse-web-demo.gif)](assets/openmuse-web-demo.mp4)
+
+**[Watch the web demo · 40 seconds](assets/openmuse-web-demo.mp4)**
+
 </div>
 
 > **Alpha, for self-hosting and building on.** Open-ended reasoning, live Google accounts, and CopilotKit Rich Threads require their own configuration. See [what is verified](docs/VERIFICATION.md) and the [roadmap](ROADMAP.md).
@@ -24,9 +28,9 @@ Built with CopilotKit React Native for iOS, Android, and web.
 
 Ask OpenMuse to find interesting stories on Hacker News or summarize CopilotKit. The agent opens and reads the real page, shows its browser inline, and replies in the conversation. **Take control** opens that same session when you need it.
 
-The 38-second iPhone recording uses [AI Mock](https://github.com/CopilotKit/aimock) for scripted model responses; Chromium navigation, page reads, and tool results are real. Framed in 16:9, with cuts and pacing for readability.
+The 38-second iPhone and 40-second desktop web recordings use [AI Mock](https://github.com/CopilotKit/aimock) for scripted model responses; Chromium navigation, page reads, and tool results are real. Framed in 16:9, with cuts and pacing for readability.
 
-[Watch the MP4](assets/openmuse-mobile-demo.mp4) · [Recording details and reproduction](docs/DEMO.md)
+[Mobile MP4](assets/openmuse-mobile-demo.mp4) · [Web MP4](assets/openmuse-web-demo.mp4) · [Recording details and reproduction](docs/DEMO.md)
 
 ## What it is
 
