@@ -1,0 +1,25 @@
+# OpenMuse interaction design
+
+OpenMuse follows the interaction principles in [Meta's design essay](https://introducing.muse.ai/) with an original visual identity.
+
+## Conversation and work
+
+- One main conversation is the default. With CopilotKit Rich Threads enabled, its identifier is saved in the workspace; side chats have separate conversation context.
+- The composer stays available during replies. Follow-ups appear in a visible queue and run in order. Stopping a reply pauses that queue; it does not cancel delegated tasks.
+- Open chats and their drafts remain mounted while navigating. Queued messages are held in the open app, not a server inbox; keep the app open until they are sent. Delegated tasks are durable server work.
+- Reading older messages should not force a scroll to the latest reply. A latest-message control returns to the live conversation.
+
+## Transparency and control
+
+- Tap the avatar to see activity, reviews and receipts. Its status names the current work or the input it needs.
+- Background updates show meaningful completions or requests for input. They link to the saved task and can be dismissed.
+- Structured review screens retain the exact recipient, action and accept/reject controls. Reading a public page requires no extra review.
+- The agent's name, tone and memory are editable in Apps. Goals, tracking and artifacts remain usable outside chat.
+
+## Visual language
+
+An airy canvas, distinct gray and sky-blue message bubbles, large touch targets, rounded input and navigation pills, and restrained artifact frames keep attention on the work. The browser and PDF previews are real application content. OpenMuse uses its own locally drawn avatar.
+
+## Boundaries
+
+The computer provides persistent Chromium, documents, and an optional Linux container with a terminal and filesystem. The terminal has no network access, while the browser handles public web access. It is not Meta's Secure VM or a graphical desktop. Live Rich Threads, model reasoning and Google accounts require credentials. This design does not imply parity with Meta's full product. See [computer setup](COMPUTER.md).

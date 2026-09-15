@@ -8,6 +8,7 @@ The release is a personal-agent alpha: delegate a job, inspect its plan, supply 
 - Server-owned jobs, plans, checkpoints, leases, retries, cancellation, and action receipts.
 - Ideas with evidence, Goals, milestones, public-page tracking, and an in-app notification inbox.
 - Persistent Chromium sessions, public-page reading, screenshots, manual interaction, and PDF downloads.
+- A private Docker Linux computer with bounded terminal commands, persistent workspace files, a text editor, PDF import/export, command receipts, and stop/restart recovery. Terminal networking is disabled.
 - PDF viewing and supported form filling, reviewed Gmail/Calendar adapters, CSV spending artifacts, identity, and editable memory.
 
 ## Integration acceptance next
@@ -20,12 +21,12 @@ The release is a personal-agent alpha: delegate a job, inspect its plan, supply 
 
 ## Product extensions
 
-- [ ] Full per-person computer lifecycle and stronger isolation; desktop applications and shell tools.
+- [ ] Interactive terminal sessions, desktop applications, per-person VM orchestration, controlled network access, and workspace disk quotas. The current [Linux computer](docs/COMPUTER.md) supports one owner per deployment.
 - [ ] Agent-operated interactive websites, reservations, customer service, and carefully scoped purchase handoff.
 - [ ] Google Drive/Docs and individually validated social, bank, and health connectors.
 - [ ] Device push notifications, voice input/replies, and image generation.
 - [ ] OCR/scanned PDFs, more form types, and calendar recurrence editing.
-- [ ] Adaptive long-term plans, broader source-backed ideas, and sandboxed generated tools.
+- [ ] Adaptive long-term plans, broader source-backed ideas, and a managed registry for generated tools.
 - [ ] Multi-user authentication, deployment hardening, retention/export controls, and operational recovery.
 
 Each item needs its own authentication, capability boundaries, failure behavior, and end-to-end evidence before it becomes a supported feature. No dates or third-party API access are promised.

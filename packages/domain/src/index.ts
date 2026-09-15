@@ -193,3 +193,5 @@ export interface ExecutionBackend {
   readonly capabilities: readonly string[];
   health(): Promise<{ available: boolean; detail: string }>;
 }
+
+export type { ComputerCommand, ComputerDirectory, ComputerSnapshot } from "./computer.ts";

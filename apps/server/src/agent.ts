@@ -2,7 +2,7 @@ import "./config.ts";
 import { HttpAgent } from "@ag-ui/client";
 import {
   type AgentsFactory,
-  CopilotKitIntelligence,
+  type CopilotKitIntelligence,
   CopilotRuntime,
   createCopilotHonoHandler,
 } from "@copilotkit/runtime/v2";
@@ -24,7 +24,12 @@ export function agentConfigured(config: Config) {
         ))
   );
 }
-export function makeRuntime(config: Config, service: AgentService, auth: Auth) {
+export function makeRuntime(
+  config: Config,
+  service: AgentService,
+  auth: Auth,
+  intelligence?: CopilotKitIntelligence,
+) {
   const agents: AgentsFactory = async ({ request }) => ({
     default:
       config.agentBackend === "sample"
@@ -44,10 +49,10 @@ export function makeRuntime(config: Config, service: AgentService, auth: Auth) {
               await auth.owner(request.headers.get("authorization") ?? undefined),
             ),
   });
-  const runtime = config.intelligenceApiKey
+  const runtime = intelligence
     ? new CopilotRuntime({
         agents,
-        intelligence: new CopilotKitIntelligence({ apiKey: config.intelligenceApiKey }),
+        intelligence,
         identifyUser: async (request) => ({
           id: await auth.owner(request.headers.get("authorization") ?? undefined),
           name: "OpenMuse user",

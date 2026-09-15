@@ -2,7 +2,7 @@
 
 # OpenMuse
 
-**A personal agent with a browser, files, and work that keeps going.**
+**A personal agent with a browser, terminal, files, and work that keeps going.**
 
 Ask for an outcome. Follow the plan, review actions, and come back to the result.
 Built with CopilotKit React Native for iOS, Android, and web.
@@ -12,45 +12,46 @@ Built with CopilotKit React Native for iOS, Android, and web.
 [![CI](https://github.com/jerelvelarde/openmuse/actions/workflows/ci.yml/badge.svg)](https://github.com/jerelvelarde/openmuse/actions/workflows/ci.yml)
 [![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+[![Your agent has a computer. Watch the 38-second OpenMuse mobile demo.](assets/openmuse-demo.gif)](assets/openmuse-mobile-demo.mp4)
+
+**[Watch the mobile demo · 38 seconds](assets/openmuse-mobile-demo.mp4)**
+
 </div>
 
 > **Alpha, for self-hosting and building on.** The default runs locally with fictional data and no API keys. Open-ended reasoning, live Google accounts, and CopilotKit Rich Threads require their own configuration. See [what is verified](docs/VERIFICATION.md) and the [roadmap](ROADMAP.md).
 
 ## Demo
 
-[**Watch the native iPhone walkthrough**](https://github.com/jerelvelarde/openmuse/releases/download/v0.1.0-alpha/openmuse-demo.mp4)
+A 38-second native iPhone walkthrough, framed in 16:9: the agent's browser, Linux terminal, saved files, PDF reader, rich conversation, and goals. Captured from the working app with fictional personal data and real public websites; cut and accelerated for pace.
 
-<a href="https://github.com/jerelvelarde/openmuse/releases/download/v0.1.0-alpha/openmuse-demo.mp4"><img src="assets/computer.png" alt="OpenMuse's agent computer showing a real persistent Chromium session" width="280"></a>
-<a href="https://github.com/jerelvelarde/openmuse/releases/download/v0.1.0-alpha/openmuse-demo.mp4"><img src="assets/document.png" alt="The native PDF reader displaying a saved filled permission form" width="280"></a>
-
-Actual app capture with fictional mail, a generated PDF, saved tasks, a finance artifact, goals, and a real Chromium browser. Edited for pace; no simulated provider connections. [Recording details and reproduction](docs/DEMO.md).
+[Watch the MP4](assets/openmuse-mobile-demo.mp4) · [Recording details and reproduction](docs/DEMO.md)
 
 ## What it is
 
 OpenMuse is a personal-agent application inspired by Meta Muse and patterned after [OpenBot](https://github.com/CopilotKit/OpenBot)'s emphasis on an agent's computer, visible work, and rich results. It runs its own server, task worker, and browser worker. You can inspect and change the source under the MIT license.
 
-The current computer is **persistent Chromium plus documents**. The agent can read public pages and collect PDFs; you can open the same browser session and interact with it. Full desktop VMs and autonomous checkout are future work.
+The computer combines **persistent Chromium and an optional Linux workspace**. The agent can browse public pages, run commands in its own container, work with files, and move PDFs between the computer and the app. You can open its browser or terminal and continue the work. Graphical desktops and autonomous checkout remain future work.
 
 ## Features
 
 | Surface | What runs in this alpha |
 | --- | --- |
-| **Chat** | CopilotKit headless chat with streamed AG-UI events, delegated tasks, and inline browser, PDF, plan, and finance cards. |
-| **Agent computer** | Persistent browser profiles, real screenshots, interactive console, public-page reads, PDF downloads, and files. |
+| **Chat** | CopilotKit headless chat with streamed AG-UI events, a visible follow-up queue, retained drafts, delegated tasks, and inline browser, PDF, plan, and finance cards. |
+| **Agent computer** | Persistent browser profiles and takeover console; optional isolated Linux terminal, saved command receipts, editable workspace files, and PDF transfer. |
 | **Activity** | Durable task plans, progress, input requests, pause/resume/cancel/retry, approvals, and saved receipts. SQL leases recover interrupted work. |
 | **Ideas** | Suggestions with source evidence; edit, accept, or dismiss. Sent replies and completed matching work are excluded. |
 | **Goals & Tracking** | Goals and milestones; recurring public-page checks for changes, text availability, or USD price thresholds, with deduplicated alerts and failure backoff. |
 | **Documents** | Email attachment → PDF → requested form values → filled copy → reviewed reply → receipt. Native/web PDF viewing, paging, zoom, supported fields, and sharing. |
 | **Finance** | Import transaction CSV to create a spending summary with categories, transactions, and a savings-goal action. |
 | **Gmail & Calendar** | Google OAuth adapters, complete mail threads, drafts/attachments, calendar discovery, and reviewed event creation/update/deletion. Live credentials required. |
-| **Personal context** | Editable agent identity and memories you can inspect, update, and forget. Durable in-app notifications. |
-| **Rich Threads** | Optional CopilotKit Intelligence persistence with native thread listing, switching, renaming, archiving, restoring, and replay. A project key is required; live acceptance is pending. |
+| **Personal context** | Editable name, tone, avatar, and memories. Background-update preferences and durable in-app notifications. |
+| **Rich Threads** | Optional CopilotKit Intelligence persistence with a stable main conversation, side chats, renaming, archiving, restoring, and replay. A project key is required; live acceptance is pending. |
 
 The [feature inventory](docs/FEATURES.md) maps the Muse references to the implementation. Health/bank/social connectors, device push, voice, generated executable tools, and automatic reservations/payments are on the [roadmap](ROADMAP.md).
 
 ## Quick start
 
-**Requirements:** Node 24 LTS and pnpm 11.19.0. The sample app needs no model, Google account, Docker, or Intelligence subscription.
+**Requirements:** Node 24 LTS and pnpm 11.19.0. The local app needs no model, Google account, Docker, or Intelligence subscription.
 
 ```sh
 git clone https://github.com/jerelvelarde/openmuse.git
@@ -70,8 +71,8 @@ Open [localhost:8081](http://localhost:8081). The API runs at [localhost:8787/ap
 
 ### Try it
 
-1. In Chat, send **“Complete the permission slip”**. Open the task, supply fictional form values, inspect the saved PDF, and review the sample reply. This writes only to the local sample mailbox.
-2. In **Goals → Track**, create a built-in availability watch, then change the sample page to trigger an alert.
+1. In Chat, send **“Complete the permission slip”**. Open the task, supply fictional form values, inspect the saved PDF, and review the prepared reply. This writes only to the local mailbox.
+2. In **Goals → Track**, create a built-in availability watch, then change the built-in test page to trigger an alert.
 3. In **Menu → Delegate task → Finance**, use **Try example transactions** to create an interactive spending tracker.
 4. Start the [browser worker](#browser-worker), then open **Computer** and navigate to `https://example.com`.
 
@@ -81,12 +82,12 @@ For iOS or Android, use `pnpm --dir apps/mobile ios` or `pnpm --dir apps/mobile 
 
 Copy the commented settings in [.env.example](.env.example) into your private `.env`:
 
-1. Set `AGENT_BACKEND=model`, `MODEL=provider/model-id`, and the matching provider key. CopilotKit supports the configured OpenAI, Anthropic or Google provider. Sample data can still be used with a real model. Provider keys stay on the server.
+1. Set `AGENT_BACKEND=model`, `MODEL=provider/model-id`, and the matching provider key. CopilotKit supports the configured OpenAI, Anthropic or Google provider. Fictional data can still be used with a real model. Provider keys stay on the server.
 2. For personal mail/calendar, set `WORKSPACE_MODE=live`, a random `OPENMUSE_ACCESS_KEY` of at least 24 characters, and `TOKEN_ENCRYPTION_KEY` containing 32 random bytes encoded as base64. Restart the API.
 3. Configure a Google OAuth web client with Gmail and Calendar APIs enabled. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; register `${PUBLIC_API_URL}/api/google/callback` as its redirect URI. Configure consent/test-user access in your Google project.
 4. Open **Apps → Gmail** (or **Google Calendar**), connect read access, and grant write access when needed. Every send or calendar change still requires its own stored review. Changing/disconnecting the account invalidates pending connection-bound work.
 
-Google credentials are encrypted at rest. File URLs and browser consoles use short-lived signatures. This deployment uses one owner protected by a shared access key; it is not a multi-tenant authentication system. Use HTTPS and restricted network access for a remote host. Do not expose sample mode beyond loopback.
+Google credentials are encrypted at rest. File URLs and browser consoles use short-lived signatures. This deployment uses one owner protected by a shared access key; it is not a multi-tenant authentication system. Use HTTPS and restricted network access for a remote host. Keep the default local-data mode on loopback.
 
 ## Browser worker
 
@@ -100,6 +101,19 @@ pnpm dev:browser
 Or use `docker compose --env-file .env -f infra/compose.yaml up --build -d`. The same token must reach the API and worker. Sessions have persistent Chromium profiles; the app can open a live screenshot console and import PDF downloads. Agent tools can read public pages and hand interactive work to the person. [Worker setup and boundaries](apps/worker/README.md).
 
 ## Persistence and operation
+
+### Linux terminal and workspace
+
+Build the computer image, enable it on the API, then open **Computer → Terminal → Start computer**:
+
+```sh
+docker build -t openmuse-computer:local apps/computer
+COMPUTER_ENABLED=true pnpm dev
+```
+
+The API needs access to the Docker CLI and engine. Commands run in a nonroot container with no host-directory mounts or credentials. A named `/workspace` volume retains files when stopped. Terminal networking is disabled; public web access uses the browser worker. Commands have a 30-second limit and saved output/exit receipts. **Files** supports folders, text editing, and PDF transfer to/from Documents. This is a Linux container, not Meta Secure VM. [Setup, Colima option, and boundaries](docs/COMPUTER.md).
+
+### Application storage
 
 By default, embedded PGlite, documents and the signing key live in `.openmuse/`; browser profiles live in `.openmuse/browser-profiles/`. Keep that directory private and back it up. The API hosts the task worker. The host must remain running for background work.
 
@@ -126,6 +140,9 @@ flowchart TD
   Review --> Google[Gmail / Calendar adapters]
   Tasks --> Browser[Chromium worker + persistent profiles]
   API --> Browser
+  API --> Computer[Optional Docker Linux computer]
+  Tasks --> Computer
+  Computer --> Volume[(Persistent workspace volume)]
   Tasks --> Files[PDF files + structured artifacts]
   API -. future adapter .-> OpenBot[OpenBot]
 ```
@@ -135,6 +152,7 @@ flowchart TD
 | `apps/mobile` | Shared iOS, Android, and web UI with CopilotKit headless hooks. |
 | `apps/server` | API, CopilotKit runtime, identity boundary, task engine, reviews, files, and persistence. |
 | `apps/worker` | Token-protected Playwright browser service with persistent profiles. |
+| `apps/computer` | Nonroot Linux image, bounded filesystem helper, and real container verification. |
 | `packages/domain` | Shared types and request validation. |
 | `packages/integrations` | Google and browser protocol adapters. |
 | `packages/backends` | Optional OpenBot HTTP adapter and its identity boundary. |
@@ -156,12 +174,13 @@ pnpm build:ios
 pnpm build:android
 pnpm --dir apps/worker typecheck
 pnpm test:browser
+pnpm test:computer
 ```
 
-Platform build scripts export JavaScript/Hermes bundles; they do not produce signed app binaries. Browser checks require installed Chromium and public fixture access. CI also exercises the browser container. See [contribution guidance](CONTRIBUTING.md) and [verification results](docs/VERIFICATION.md).
+Platform build scripts export JavaScript/Hermes bundles; they do not produce signed app binaries. Browser checks require installed Chromium and public fixture access. CI also exercises the browser and Linux computer containers. See [contribution guidance](CONTRIBUTING.md) and [verification results](docs/VERIFICATION.md).
 
 ## Contributing and license
 
 Issues and pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), and the [security policy](SECURITY.md).
 
-MIT licensed. OpenMuse is independent of Meta and is not an official CopilotKit product. Its original interface and sample assets are included; Meta's screenshots and mascot are not redistributed. Website, email, and document content supplies evidence, not permission to act.
+MIT licensed. OpenMuse is independent of Meta and is not an official CopilotKit product. Its original interface and fictional assets are included; Meta's screenshots and mascot are not redistributed. Website, email, and document content supplies evidence, not permission to act.

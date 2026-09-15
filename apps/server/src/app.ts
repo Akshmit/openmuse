@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { MessageSchema } from "@ag-ui/core";
+import { CopilotKitIntelligence } from "@copilotkit/runtime/v2";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
@@ -9,6 +10,8 @@ import { ActionService } from "./actions.ts";
 import { agentConfigured, makeRuntime } from "./agent.ts";
 import { createAuth } from "./auth.ts";
 import { BrowserService } from "./browser.ts";
+import { ComputerService, type DockerRunner } from "./computer.ts";
+import { computerRoutes } from "./computer-routes.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { agentRoutes } from "./engine/routes.ts";
@@ -18,7 +21,11 @@ import { Files } from "./files.ts";
 import { GoogleAuth } from "./google-auth.ts";
 import { WorkspaceService } from "./workspace.ts";
 
-export async function createApp(db: Store, config: Config) {
+export async function createApp(
+  db: Store,
+  config: Config,
+  options: { docker?: DockerRunner } = {},
+) {
   const auth = await createAuth(db, config),
     files = new Files(db, config, auth),
     google = new GoogleAuth(db, config),
@@ -31,8 +38,12 @@ export async function createApp(db: Store, config: Config) {
     connection: (owner) => workspace.connection(owner),
   });
   const browser = new BrowserService(db, config, auth, files);
-  const agent = new AgentService(db, config, workspace, files, actions, browser);
-  const runtime = makeRuntime(config, agent, auth);
+  const computer = new ComputerService(db, config, options.docker);
+  const agent = new AgentService(db, config, workspace, files, actions, browser, computer);
+  const intelligence = config.intelligenceApiKey
+    ? new CopilotKitIntelligence({ apiKey: config.intelligenceApiKey })
+    : undefined;
+  const runtime = makeRuntime(config, agent, auth, intelligence);
   const app = new Hono<{ Variables: { owner: string } }>();
   const origins = new Set([...config.allowedOrigins, new URL(config.publicUrl).origin]);
   app.use("*", async (c, next) => {
@@ -131,6 +142,7 @@ export async function createApp(db: Store, config: Config) {
     return c.json(snapshot);
   });
   app.route("/api/agent", agentRoutes(agent));
+  app.route("/api/computer", computerRoutes(computer, files));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
   app.get("/api/calendar/events", async (c) => {
     const query = z
@@ -181,6 +193,31 @@ export async function createApp(db: Store, config: Config) {
       }),
       201,
     );
+  });
+  app.get("/api/main-thread", async (c) => {
+    const owner = c.get("owner");
+    await db.insertIfAbsent(owner, "conversation-settings", {
+      id: "main",
+      threadId: randomUUID(),
+      existing: false,
+    });
+    const main = await db.get<{ threadId: string }>(owner, "conversation-settings", "main");
+    if (!main) throw new AppError("Main conversation could not be loaded", 503);
+    if (intelligence) {
+      try {
+        await intelligence.getOrCreateThread({
+          threadId: main.threadId,
+          userId: owner,
+          agentId: "default",
+        });
+      } catch {
+        throw new AppError(
+          "Main conversation is unavailable. Check the Rich Threads connection and try again.",
+          502,
+        );
+      }
+    }
+    return c.json({ threadId: main.threadId, existing: Boolean(intelligence) });
   });
   app.get("/api/conversation", async (c) =>
     c.json((await db.get(c.get("owner"), "conversations", "default")) ?? { messages: [] }),
@@ -244,6 +281,10 @@ export async function createApp(db: Store, config: Config) {
     const body = z.object({ url: z.url().max(4096) }).parse(await c.req.json());
     return c.json(await browser.create(c.get("owner"), body.url), 201);
   });
+  app.get("/api/browsers/:id", async (c) => {
+    const owner = c.get("owner");
+    return c.json(browser.decorate(owner, await browser.get(owner, c.req.param("id"))));
+  });
   app.post("/api/browsers/:id/navigate", async (c) => {
     const body = z.object({ url: z.url().max(4096) }).parse(await c.req.json());
     return c.json(await browser.navigate(c.get("owner"), c.req.param("id"), body.url));
@@ -254,9 +295,11 @@ export async function createApp(db: Store, config: Config) {
   app.get("/api/browsers/:id/read", async (c) =>
     c.json(await browser.read(c.get("owner"), c.req.param("id"))),
   );
-  app.post("/api/browsers/:id/reopen", async (c) =>
-    c.json(await browser.reopen(c.get("owner"), c.req.param("id"))),
-  );
+  app.post("/api/browsers/:id/reopen", async (c) => {
+    const raw = await c.req.text();
+    const body = z.object({ url: z.url().max(4096).optional() }).parse(raw ? JSON.parse(raw) : {});
+    return c.json(await browser.reopen(c.get("owner"), c.req.param("id"), body.url));
+  });
   app.post("/api/browsers/:id/import-downloads", async (c) =>
     c.json(await browser.imports(c.get("owner"), c.req.param("id"))),
   );
@@ -298,5 +341,5 @@ export async function createApp(db: Store, config: Config) {
   app.get("/", (c) =>
     c.json({ name: "OpenMuse", app: "http://localhost:8081", health: "/api/health" }),
   );
-  return { app, auth, files, actions, workspace, agent };
+  return { app, auth, files, actions, workspace, agent, computer };
 }

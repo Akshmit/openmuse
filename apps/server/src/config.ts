@@ -25,6 +25,9 @@ export interface Config {
   workerUrl?: string;
   workerToken?: string;
   taskWorkerEnabled?: boolean;
+  computerEnabled?: boolean;
+  computerImage?: string;
+  computerDeploymentId?: string;
   allowedOrigins: string[];
 }
 export function readConfig(): Config {
@@ -58,6 +61,9 @@ export function readConfig(): Config {
     workerUrl: process.env.BROWSER_WORKER_URL,
     workerToken: process.env.WORKER_TOKEN,
     taskWorkerEnabled: process.env.TASK_WORKER_ENABLED !== "false",
+    computerEnabled: process.env.COMPUTER_ENABLED === "true",
+    computerImage: process.env.COMPUTER_IMAGE ?? "openmuse-computer:local",
+    computerDeploymentId: process.env.COMPUTER_DEPLOYMENT_ID,
     allowedOrigins: (
       process.env.ALLOWED_ORIGINS ?? "http://localhost:8081,http://127.0.0.1:8081"
     ).split(","),
