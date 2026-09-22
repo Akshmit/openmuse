@@ -2,7 +2,7 @@
 
 # OpenMuse
 
-**A personal agent with a browser, terminal, files, and work that keeps going and works with any agent harness.**
+**A personal agent with a browser, terminal, files, and work that keeps going. Compatible with any agent harness.**
 
 Ask for an outcome. Follow the plan, review actions, and come back to the result.
 Built with CopilotKit React Native for iOS, Android, and web.
